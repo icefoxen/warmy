@@ -1,14 +1,13 @@
 //! Shareable resources.
 
-use std::cell::{Ref, RefCell, RefMut};
-use std::rc::Rc;
+use std::sync::{Arc, Mutex, MutexGuard};
 
 /// Shareable resource type.
 ///
 /// Resources are wrapped in this type. You cannot do much with an object of this type, despite
 /// borrowing immutable or mutably its content.
 #[derive(Debug)]
-pub struct Res<T>(Rc<RefCell<T>>);
+pub struct Res<T>(Arc<Mutex<T>>);
 
 impl<T> Clone for Res<T> {
   fn clone(&self) -> Self {
@@ -19,16 +18,17 @@ impl<T> Clone for Res<T> {
 impl<T> Res<T> {
   /// Wrap a value in a shareable resource.
   pub fn new(t: T) -> Self {
-    Res(Rc::new(RefCell::new(t)))
+    Res(Arc::new(Mutex::new(t)))
   }
 
   /// Borrow a resource for as long as the return value lives.
-  pub fn borrow(&self) -> Ref<T> {
-    self.0.borrow()
+    pub fn borrow(&self) -> MutexGuard<T> {
+        let l = self.0.lock().unwrap();
+        l
   }
 
   /// Mutably borrow a resource for as long as the return value lives.
-  pub fn borrow_mut(&self) -> RefMut<T> {
-    self.0.borrow_mut()
+    pub fn borrow_mut(&self) -> MutexGuard<T> {
+    self.0.lock().unwrap()
   }
 }
